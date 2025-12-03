@@ -1,69 +1,76 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Stock Dashboard</title>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-
+    <title>{{ symbol }} Stock Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <style>
-        body { font-family: Arial; background:#111; color:white; }
-        .box { background:#222; padding:15px; border-radius:10px; margin-top:15px; }
-        a { color:#4af; }
+        body {
+            background: #0f0f0f;
+            color: white;
+            font-family: Arial;
+        }
+        .container {
+            width: 90%;
+            margin: auto;
+            margin-top: 40px;
+        }
+        .news-card {
+            background: #1a1a1a;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .sentiment {
+            font-weight: bold;
+        }
+        a { color: #4da3ff; }
     </style>
 </head>
 <body>
+<div class="container">
 
-<h1>Stock Analysis</h1>
+    <h1>{{ symbol }} Stock Tracker</h1>
+    <h2>Current Price: ${{ price }}</h2>
+    <h2>Predicted Next Day Price: ${{ predicted_price }}</h2>
 
-<form method="POST">
-    <input name="ticker" placeholder="Enter ticker (AAPL)" required>
-    <button type="submit">Search</button>
-</form>
+    <!-- Candlestick Chart -->
+    <div id="chart" style="height: 400px;"></div>
 
-{% if error %}
-<p style="color:red;">{{ error }}</p>
-{% endif %}
+    <script>
+        var candleData = {{ candles|safe }};
+        var options = {
+            series: [{ data: candleData }],
+            chart: {
+                type: 'candlestick',
+                height: 400,
+                background: '#0f0f0f',
+                foreColor: '#ffffff'
+            },
+            title: { text: '6-Month Candlestick Chart', align: 'left' },
+            xaxis: { type: 'category' },
+            yaxis: { tooltip: { enabled: true } }
+        };
+        var chart = new ApexCharts(document.querySelector("#chart"), options);
+        chart.render();
+    </script>
 
-{% if ticker %}
-<h2>{{ ticker }}</h2>
-{% endif %}
+    <!-- News -->
+    <h2>Relevant News</h2>
+    {% if news %}
+        {% for a in news %}
+            <div class="news-card">
+                <span>Relevance: {{ a.relevance }}</span><br>
+                <strong>{{ a.title }}</strong><br>
+                <em>{{ a.source.name }}</em><br>
+                <p>{{ a.description }}</p>
+                <span class="sentiment">Sentiment: {{ a.sentiment_label }} ({{ a.sentiment_score }})</span><br>
+                <a href="{{ a.url }}" target="_blank">Read more</a>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No relevant news found.</p>
+    {% endif %}
 
-<!-- Chart -->
-{% if fig_json %}
-<div id="chart" class="box"></div>
-<script>
-    let fig = {{ fig_json | safe }};
-    Plotly.newPlot("chart", fig.data, fig.layout);
-</script>
-{% endif %}
-
-<!-- Prediction -->
-{% if prediction %}
-<div class="box">
-    <h3>Prediction</h3>
-    <p>{{ prediction }}</p>
 </div>
-{% endif %}
-
-<!-- News -->
-{% if news %}
-<div class="box">
-    <h3>Relevant News</h3>
-
-    {% for n in news %}
-    <div style="margin-bottom:12px;">
-        <a href="{{ n.url }}" target="_blank"><b>{{ n.title }}</b></a>
-        <p>{{ n.desc }}</p>
-
-        <p>
-            <b>Relevancy Score:</b> {{ n.relevancy }}<br>
-            <b>FinBERT:</b> {{ n.sentiment }} ({{ n.sentiment_score }})
-        </p>
-
-        <hr>
-    </div>
-    {% endfor %}
-</div>
-{% endif %}
-
 </body>
 </html>
