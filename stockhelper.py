@@ -1,7 +1,8 @@
 from flask import Flask, render_template, request
 import yfinance as yf
 import pandas as pd
-import numpy as np
+import numpy as np\
+
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from datetime import datetime, timedelta
