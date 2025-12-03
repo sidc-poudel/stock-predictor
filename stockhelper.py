@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 import yfinance as yf
 import requests
 import json
@@ -142,13 +142,25 @@ def get_chart(symbol):
 # -----------------------------
 # FLASK ROUTE
 # -----------------------------
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def index():
-    symbol = DEFAULT_SYMBOL
+    if request.method == "POST":
+        symbol = request.form.get("symbol", DEFAULT_SYMBOL).upper()
+    else:
+        symbol = request.args.get("symbol", DEFAULT_SYMBOL).upper()
+
+    # Fetch stock data
     price = get_price(symbol)
     predicted_price = predict_next_day_price(symbol)
     news = get_stock_news(symbol)
     candles = get_chart(symbol)
+
+    # If ticker is invalid, show message instead of crashing
+    if price is None:
+        price = "N/A"
+        predicted_price = "N/A"
+        news = []
+        candles = []
 
     return render_template(
         "index.html",
